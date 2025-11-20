@@ -1,0 +1,32 @@
+[project]
+name = "meow-meow-3000"
+version = "0.1.0"
+description = "WAF+IDS pédagogique (reverse proxy + scoring + dashboard)"
+requires-python = ">=3.11"
+dependencies = [
+  "flask>=3.0",
+  "httpx>=0.27",
+  "orjson>=3.9; platform_system != 'Windows'", # optionnel/perf
+]
+
+[project.scripts]
+waf-proxy = "waf.run_waf:main"
+waf-dashboard = "waf.run_dashboard:main"
+
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["waf"]
+include = [
+  "waf/templates/**",
+  "waf/static/**",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "waf/**",
+  "README.md",
+  "pyproject.toml",
+]

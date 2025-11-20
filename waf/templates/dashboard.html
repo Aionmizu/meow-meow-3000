@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAF+IDS Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>WAF + IDS Dashboard</h1>
+  <div class="meta">
+    <span>Mode Proxy: via script waf-proxy (IDS/IPS)</span>
+    <span>Logs: data/logs.json (JSON Lines)</span>
+  </div>
+</header>
+
+<section class="filters">
+  <label>Severity:
+    <select id="severity">
+      <option value="">(all)</option>
+      <option value="low">low</option>
+      <option value="high">high</option>
+      <option value="critical">critical</option>
+    </select>
+  </label>
+  <label>Action:
+    <select id="action">
+      <option value="">(all)</option>
+      <option value="ALLOW">ALLOW</option>
+      <option value="BLOCK">BLOCK</option>
+      <option value="ERROR">ERROR</option>
+    </select>
+  </label>
+  <label>Rule contains:
+    <input id="rule" type="text" placeholder="e.g. SQLI_UNION" />
+  </label>
+  <label>Rows:
+    <input id="limit" type="number" min="20" max="2000" step="20" value="200" />
+  </label>
+  <button id="refresh">Refresh</button>
+  <span id="status"></span>
+</section>
+
+<section>
+  <table id="logs">
+    <thead>
+      <tr>
+        <th>Time (UTC)</th>
+        <th>IP</th>
+        <th>Method</th>
+        <th>URL</th>
+        <th>Score</th>
+        <th>Severity</th>
+        <th>Rules</th>
+        <th>Action</th>
+        <th>Status</th>
+        <th>ReqID</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const tbody = $("#logs tbody");
+const statusEl = $("#status");
+const severitySel = $("#severity");
+const actionSel = $("#action");
+const ruleInput = $("#rule");
+const limitInput = $("#limit");
+const refreshBtn = $("#refresh");
+let timer = null;
+
+function renderRows(items) {
+  tbody.innerHTML = "";
+  for (const e of items) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${e.timestamp ?? ''}</td>
+      <td>${e.source_ip ?? ''}</td>
+      <td>${e.method ?? ''}</td>
+      <td class="url" title="${e.backend_url ?? ''}">${e.url ?? ''}</td>
+      <td class="score">${e.score ?? ''}</td>
+      <td class="sev sev-${(e.severity ?? '').toLowerCase()}">${e.severity ?? ''}</td>
+      <td class="rules">${(e.matched_rules ?? []).join(', ')}</td>
+      <td class="action action-${(e.action ?? '').toLowerCase()}">${e.action ?? ''}</td>
+      <td>${e.status ?? ''}</td>
+      <td class="reqid">${e.request_id ?? ''}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+async function load() {
+  const params = new URLSearchParams();
+  if (severitySel.value) params.set('severity', severitySel.value);
+  if (actionSel.value) params.set('action', actionSel.value);
+  if (ruleInput.value) params.set('rule', ruleInput.value);
+  if (limitInput.value) params.set('limit', limitInput.value);
+  const url = '/api/logs?' + params.toString();
+  statusEl.textContent = 'Loading...';
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    renderRows(data.items || []);
+    statusEl.textContent = `Loaded ${data.count || 0} items`;
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Error loading logs';
+  }
+}
+
+function autoRefresh() {
+  if (timer) clearInterval(timer);
+  timer = setInterval(load, 2000);
+}
+
+refreshBtn.addEventListener('click', load);
+severitySel.addEventListener('change', load);
+actionSel.addEventListener('change', load);
+ruleInput.addEventListener('input', () => { if (!timer) load(); });
+limitInput.addEventListener('change', load);
+
+load();
+autoRefresh();
+</script>
+</body>
+</html>
