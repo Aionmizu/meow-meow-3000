@@ -105,9 +105,13 @@ def create_app() -> Flask:
             if qmode and qmode.upper() in {"IDS", "IPS"}:
                 mode = qmode.upper()
 
-        # Compute score
-        text = _collect_text_for_analysis()
-        score, matched_rules, flags = compute_score(text)
+        # Compute score (robuste: aucune exception ne doit casser la requête)
+        try:
+            text = _collect_text_for_analysis()
+            score, matched_rules, flags = compute_score(text)
+        except Exception as e:
+            # En cas d'erreur d'analyse, on marque score=0 mais on continue et on loguera l'erreur
+            score, matched_rules, flags = 0, [], {"analysis_error": True}
         severity = severity_from_score(score)
 
         # Action resolution
@@ -157,12 +161,12 @@ def create_app() -> Flask:
             return resp
 
         # Forward to backend
-        req_body = request.get_data(cache=True)  # bytes
-        headers = _filtered_request_headers(target_url)
         try:
+            req_body = request.get_data(cache=True)  # bytes
+            headers = _filtered_request_headers(target_url)
             with httpx.Client(follow_redirects=False, timeout=15.0, verify=False) as client:
                 upstream_resp = client.request(method, target_url, headers=headers, content=req_body)
-        except httpx.HTTPError as e:
+        except Exception as e:  # Capture toute erreur (httpx, encodage, etc.)
             duration_ms = time_ms() - started
             append_log({
                 "timestamp": utc_now_iso(),
@@ -174,7 +178,7 @@ def create_app() -> Flask:
                 "score": score,
                 "severity": severity,
                 "matched_rules": matched_rules,
-                "flags": flags,
+                "flags": {**(flags or {}), "proxy_error": True},
                 "action": "ERROR",
                 "status": 502,
                 "error": str(e),

@@ -11,6 +11,7 @@ Règles d’usage :
 2. Lorsque tu déploies sur Kali, note la commande exacte, le port, et l’IP backend DVWA utilisée.
 3. Garde la même structure de journaux en JSON Lines pour les logs d’exécution (dans `data/logs.json`).
 4. Mets ici les extraits de commandes `uv` et `curl` utilisées en classe pour que tout soit reproductible.
+5. Ne commets jamais de secrets (clés SSH, tokens, mots de passe) dans ce dossier ni ailleurs dans le repo. Si une donnée sensible a été ajoutée par erreur, la retirer immédiatement et remplacer par [REDACTED], puis régénérer les accès si nécessaire.
 
 Objectif :
 - Disposer d’un suivi clair et consultable rapidement, sans polluer le README principal.

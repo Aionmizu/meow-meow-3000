@@ -34,10 +34,14 @@ def utc_now_iso() -> str:
 
 
 def append_log(event: Dict[str, Any]) -> None:
-    ensure_data_dir()
-    line = _json_dumps(event)
-    with open(settings.logs_file, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    try:
+        ensure_data_dir()
+        line = _json_dumps(event)
+        with open(settings.logs_file, "a", encoding="utf-8", errors="replace") as f:
+            f.write(line + "\n")
+    except Exception:
+        # En dernier recours, on ignore l'erreur d'écriture pour ne pas casser la réponse WAF
+        pass
 
 
 def time_ms() -> int:

@@ -14,7 +14,8 @@ def read_logs(limit: int | None = None) -> List[Dict[str, Any]]:
     if not os.path.exists(path):
         return []
     entries: List[Dict[str, Any]] = []
-    with open(path, "r", encoding="utf-8") as f:
+    # Tolérance maximale aux caractères invalides pour ne jamais planter l'API/dashboard
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.strip()
             if not line:

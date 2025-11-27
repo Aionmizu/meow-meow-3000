@@ -7,7 +7,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Settings:
     # Backend DVWA base URL (Kali's Apache)
-    backend_base_url: str = os.getenv("WAF_BACKEND", "http://127.0.0.1/dvwa")
+    backend_base_url: str = os.getenv("WAF_BACKEND", "http://127.0.0.1/DVWA")
 
     # Mode: IDS (log-only) or IPS (block when score > threshold)
     mode: str = os.getenv("WAF_MODE", "IPS").upper()  # "IDS" or "IPS"
