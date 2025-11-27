@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+# Base directory of the project/package (more stable than CWD under systemd)
+_PKG_DIR = Path(__file__).resolve().parent
+_BASE_DIR = _PKG_DIR.parent  # project root when running from repo or install dir
 
 
 @dataclass(frozen=True)
 class Settings:
     # Backend DVWA base URL (Kali's Apache)
-    backend_base_url: str = os.getenv("WAF_BACKEND", "http://127.0.0.1/DVWA")
+    backend_base_url: str = os.getenv("WAF_BACKEND", "http://127.0.0.1/dvwa")
 
     # Mode: IDS (log-only) or IPS (block when score > threshold)
     mode: str = os.getenv("WAF_MODE", "IPS").upper()  # "IDS" or "IPS"
@@ -24,7 +30,8 @@ class Settings:
     dashboard_port: int = int(os.getenv("WAF_DASHBOARD_PORT", "5001"))
 
     # Paths
-    data_dir: str = os.getenv("WAF_DATA_DIR", os.path.join(os.getcwd(), "data"))
+    # Defaults to a path relative to the install/project directory, not the current working dir
+    data_dir: str = os.getenv("WAF_DATA_DIR", str(_BASE_DIR / "data"))
     logs_file: str = os.getenv("WAF_LOGS_FILE", os.path.join(data_dir, "logs.json"))
 
     # Feature toggles

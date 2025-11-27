@@ -213,3 +213,56 @@ def create_app() -> Flask:
         return response
 
     return app
+
+
+def create_app_with_error_handler() -> Flask:
+    """Same as create_app(), but with a global error handler to guarantee logging.
+    Kept separate for clarity; prefer using this in runners.
+    """
+    app = create_app()
+
+    @app.errorhandler(Exception)
+    def _handle_unexpected_error(e: Exception):  # type: ignore[override]
+        # Try to salvage as much context as possible and always log the event
+        rid = new_request_id()
+        try:
+            text = _collect_text_for_analysis()
+            score, matched_rules, flags = compute_score(text)
+        except Exception:
+            score, matched_rules, flags = 0, [], {"analysis_error": True}
+        severity = severity_from_score(score)
+        waf_hdrs = {
+            "X-WAF-Score": str(score),
+            "X-WAF-Severity": severity,
+            "X-WAF-Action": "ERROR",
+            "X-Request-ID": rid,
+        }
+        try:
+            target_url = _build_target_url(request.path or "/", request.query_string.decode("utf-8", errors="ignore"))
+        except Exception:
+            target_url = ""
+        append_log({
+            "timestamp": utc_now_iso(),
+            "request_id": rid,
+            "source_ip": getattr(request, 'remote_addr', None) or "unknown",
+            "method": getattr(request, 'method', None) or "UNKNOWN",
+            "url": getattr(request, 'url', None) or "",
+            "backend_url": target_url,
+            "score": score,
+            "severity": severity,
+            "matched_rules": matched_rules,
+            "flags": {**(flags or {}), "unhandled_exception": True},
+            "action": "ERROR",
+            "status": 500,
+            "user_agent": request.headers.get("User-Agent", "") if hasattr(request, 'headers') else "",
+            "response_time_ms": None,
+        })
+        resp = make_response({
+            "error": "Internal Server Error",
+            "request_id": rid,
+        }, 500)
+        for k, v in waf_hdrs.items():
+            resp.headers[k] = v
+        return resp
+
+    return app
