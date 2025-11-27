@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from .config import settings
-from .proxy import create_app_with_error_handler
+from .proxy import create_app
 
 
 def main() -> None:
-    # Use the variant with global error handler to guarantee logging on any failure
-    app = create_app_with_error_handler()
+    app = create_app()
     # Use Flask built-in server for demo; for prod, use gunicorn/uvicorn with ASGI/WSGI adapter
     app.run(host=settings.host, port=settings.port, debug=False)
 

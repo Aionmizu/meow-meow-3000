@@ -49,6 +49,15 @@ curl -s http://127.0.0.1:8080/healthz
 bash scripts/verify_kali.sh
 ```
 
+Note importante si votre DVWA est sur une autre machine (ex: http://172.30.183.122/DVWA/)
+- Configurez le backend du WAF pour pointer vers cette URL (respecter la casse du chemin):
+  - via systemd (override du service): `Environment=WAF_BACKEND=http://172.30.183.122/DVWA/`
+  - ou au lancement local: `WAF_BACKEND=http://172.30.183.122/DVWA/`
+- Le WAF réécrit automatiquement les en‑têtes `Location` des réponses du backend pour que la navigation reste derrière le WAF (vous continuez à voir les logs même lors de redirections).
+- Pour ne plus avoir à ajouter `:8080` dans l’URL côté client, vous pouvez faire écouter le WAF sur le port 80:
+  - via systemd: `Environment=WAF_LISTEN_PORT=80` puis `daemon-reload` et `restart`.
+  - ou rediriger le port 80 vers 8080 (iptables/nftables) si vous préférez garder l’appli sur 8080.
+
 ---
 
 ### Push sur GitHub (si nécessaire)
