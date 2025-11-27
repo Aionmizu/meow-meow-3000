@@ -58,6 +58,28 @@ Note importante si votre DVWA est sur une autre machine (ex: http://172.30.183.1
   - via systemd: `Environment=WAF_LISTEN_PORT=80` puis `daemon-reload` et `restart`.
   - ou rediriger le port 80 vers 8080 (iptables/nftables) si vous préférez garder l’appli sur 8080.
 
+Tests DVWA (sqli/sqli_blind) via le WAF
+- Important: tapez l’URL du WAF (ip/port du WAF), pas celle du backend DVWA. Si le WAF écoute sur 8080: `http://<ip_kali>:8080/`. Si vous l’avez configuré sur 80: `http://<ip_kali>/`.
+- Le caractère `#` (fragment) n’est jamais envoyé au serveur. Utilisez plutôt `--+` (commentaire SQL) ou encodez `#` en `%23` si vous voulez qu’il traverse le HTTP.
+
+Exemples prêts à copier/coller (doivent apparaître dans les logs et, en mode IPS seuil 9, être BLOQUÉS 403):
+
+```
+# SQLi classique (UNION encodé + quote encodée)
+curl -i "http://<ip_kali>:8080/DVWA/vulnerabilities/sqli/?id=%27%20or%201%3d1%20union%20select%201,2--+&Submit=Submit"
+
+# SQLi blind (time-based)
+curl -i "http://<ip_kali>:8080/DVWA/vulnerabilities/sqli_blind/?id=1%20and%20sleep(2)--+&Submit=Submit"
+
+# Variante simple (non encodée) — peut être ALLOW si score < 9 selon la combinaison
+curl -i "http://<ip_kali>:8080/DVWA/vulnerabilities/sqli/?id=1' or 1=1-- +&Submit=Submit"
+```
+
+Attendu côté réponses:
+- En‑têtes `X-WAF-Score`, `X-WAF-Severity`, `X-WAF-Action` présents.
+- En mode IPS (`WAF_MODE=IPS`) et seuil par défaut 9, les charges encodées et/ou combinées dépassent généralement le seuil → `403`.
+- Chaque requête génère une ligne dans `data/logs.json` et apparaît dans le dashboard `http://<ip_kali>:5001/dashboard`.
+
 ---
 
 ### Push sur GitHub (si nécessaire)

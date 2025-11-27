@@ -65,15 +65,29 @@ SQLI_PATTERNS: List[Tuple[str, re.Pattern, int]] = [
     ("SQLI_OR_1EQ1", re.compile(r"(['\"]\s*or\s*1\s*=\s*1)"), 5),
     # Reinforced: UNION SELECT now worth 6 points
     ("SQLI_UNION_SELECT", re.compile(r"\bunion\s+select\b"), 6),
+    # New: AND 1=1 (variante sans guillemet, utile sur DVWA sqli_blind)
+    ("SQLI_AND_1EQ1", re.compile(r"\band\s*1\s*=\s*1\b"), 5),
     ("SQLI_SLEEP_FN", re.compile(r"\bsleep\s*\("), 4),
+    ("SQLI_BENCHMARK_FN", re.compile(r"\bbenchmark\s*\("), 4),
     ("SQLI_DROP_TABLE", re.compile(r";\s*drop\s+table"), 6),
     ("SQLI_HEX_ENC_OR", re.compile(r"%27\s*or\s*1%3d1"), 4),
     # New: bare OR 1=1 without preceding quote
     ("SQLI_BARE_OR_1EQ1", re.compile(r"\bor\s*1\s*=\s*1\b"), 4),
     # New: comment dashes pattern often used in SQLi
-    ("SQLI_COMMENT_DASH", re.compile(r"--\s"), 2),
+    ("SQLI_COMMENT_DASH", re.compile(r"--(?:\s|\+)"), 2),
     # New: stacked queries using '; select'
     ("SQLI_STACKED_QUERIES", re.compile(r";\s*select\b"), 4),
+    # New: URL comment marker '#' when it arrive encodé en %23 (dans la requête HTTP)
+    ("SQLI_URL_COMMENT_SHARP", re.compile(r"%23"), 2),
+    # New: id param contenant une quote (fréquente pour DVWA)
+    ("SQLI_PARAM_ID_QUOTE", re.compile(r"[?&]id=\d*(['%27])"), 3),
+    # Param-specifiques pour rehausser le score si l'injection est dans id=
+    ("SQLI_PARAM_ID_AND_1EQ1", re.compile(r"[?&]id=[^\s&]*\band\s*1\s*=\s*1\b"), 5),
+    ("SQLI_PARAM_ID_OR_1EQ1", re.compile(r"[?&]id=[^\s&]*\bor\s*1\s*=\s*1\b"), 5),
+    ("SQLI_PARAM_ID_UNION_SELECT", re.compile(r"[?&]id=[^\s&]*\bunion\s+select\b"), 5),
+    # Time-based blind patterns
+    ("SQLI_AND_SLEEP", re.compile(r"\band\s+sleep\s*\("), 7),
+    ("SQLI_PARAM_ID_AND_SLEEP", re.compile(r"[?&]id=[^\s&]*\band\s+sleep\s*\("), 5),
 ]
 
 XSS_PATTERNS: List[Tuple[str, re.Pattern, int]] = [
