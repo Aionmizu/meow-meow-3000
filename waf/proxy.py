@@ -84,8 +84,18 @@ def _filtered_request_headers(target_url: str) -> Dict[str, str]:
 
 
 def _filtered_response(resp: httpx.Response, waf_headers: Dict[str, str]) -> Response:
-    # Build Flask response with filtered headers
-    excluded = {"content-encoding", "transfer-encoding", "connection"}
+    # Build Flask response with filtered headers (strip hop-by-hop and content-length)
+    excluded = {
+        "content-length",
+        "transfer-encoding",
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailers",
+        "upgrade",
+    }
     # On peut être amené à réécrire le corps (HTML) pour garder le client derrière le WAF.
     will_rewrite_body = False
     content_type = resp.headers.get("Content-Type", "")
@@ -125,7 +135,11 @@ def _filtered_response(resp: httpx.Response, waf_headers: Dict[str, str]) -> Res
                     v = v.replace(f"Domain={backend_host}", f"Domain={waf_host_only}")
             except Exception:
                 pass
-        response.headers[k] = v
+        # Préserver les multiples Set-Cookie en utilisant add()
+        if lk == "set-cookie":
+            response.headers.add(k, v)
+        else:
+            response.headers[k] = v
 
     # Réécriture éventuelle de Location pour éviter de sortir du WAF
     loc = resp.headers.get("Location")
@@ -158,7 +172,7 @@ def _filtered_response(resp: httpx.Response, waf_headers: Dict[str, str]) -> Res
             # En cas de doute, on laisse Location telle quelle
             pass
 
-    # Ajuster Content-Length si nous avons réécrit le corps
+    # Ajuster Content-Length si nous avons réécrit le corps (sinon laisser Werkzeug calculer)
     if will_rewrite_body:
         try:
             response.headers["Content-Length"] = str(len(body_bytes))
