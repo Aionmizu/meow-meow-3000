@@ -87,6 +87,7 @@ def _filtered_response(resp: httpx.Response, waf_headers: Dict[str, str]) -> Res
     # Build Flask response with filtered headers (strip hop-by-hop and content-length)
     excluded = {
         "content-length",
+        "content-encoding",
         "transfer-encoding",
         "connection",
         "keep-alive",
