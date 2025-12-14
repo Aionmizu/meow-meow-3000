@@ -74,6 +74,13 @@ curl -i "http://<ip_waf>/?q=%2527%2520or%25201%253d1"
 - Bouton **Refresh** pour recharger immédiatement.
 - Nouveau bouton **Clear logs** pour vider `data/logs.json` depuis l'interface.
 
+## Scoring (résumé synthétique)
+- Normalisation avant matching: double décodage URL tolérant, passage en minuscules, suppression des commentaires `/**/`, réduction des espaces.
+- Règles simples pondérées (SQLi, XSS, traversal, injection commande) : chaque signature vaut 2 à 7 points.
+- Bonus si l'entrée est encodée (`+3`) ou double-décodée (`+4`).
+- Gravité dérivée du score: `none` (≤0), `low` (<5), `high` (<9), `critical` (≥9).
+- Mode IDS: journalise dès `score >= 5` (`WAF_THRESHOLD_IDS`). Mode IPS: bloque dès `score >= 9` (`WAF_THRESHOLD_BLOCK`).
+
 ## Structure rapide du code
 - `waf/config.py`: configuration (ports, backend, seuils).
 - `waf/proxy.py`: reverse proxy + scoring + décision IDS/IPS.
