@@ -39,6 +39,7 @@
     <input id="limit" type="number" min="20" max="2000" step="20" value="200" />
   </label>
   <button id="refresh">Refresh</button>
+  <button id="clear-logs" title="Efface le fichier de logs JSON">Clear logs</button>
   <span id="status"></span>
 </section>
 
@@ -71,6 +72,7 @@ const actionSel = $("#action");
 const ruleInput = $("#rule");
 const limitInput = $("#limit");
 const refreshBtn = $("#refresh");
+const clearBtn = $("#clear-logs");
 let timer = null;
 
 function renderRows(items) {
@@ -122,6 +124,21 @@ severitySel.addEventListener('change', load);
 actionSel.addEventListener('change', load);
 ruleInput.addEventListener('input', () => { if (!timer) load(); });
 limitInput.addEventListener('change', load);
+
+clearBtn.addEventListener('click', async () => {
+  const previous = statusEl.textContent;
+  statusEl.textContent = 'Clearing logs...';
+  try {
+    const res = await fetch('/api/logs/clear', { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await load();
+    statusEl.textContent = 'Logs cleared';
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Error clearing logs';
+    setTimeout(() => statusEl.textContent = previous, 3000);
+  }
+});
 
 load();
 autoRefresh();

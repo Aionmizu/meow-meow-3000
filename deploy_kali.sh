@@ -7,9 +7,9 @@
 #     --repo https://github.com/Aionmizu/meow-meow-3000.git \
 #     --branch main \
 #     --install-dir /opt/meow-meow-3000 \
-#     --backend http://127A.0.0.1/dvwa \
+#     --backend http://127.0.0.1:8080 \
 #     --mode IPS \
-#     --waf-port 8080 \
+#     --waf-port 80 \
 #     --dash-port 5001
 
 set -euo pipefail
@@ -18,10 +18,10 @@ set -euo pipefail
 REPO_URL="https://github.com/Aionmizu/meow-meow-3000.git"
 BRANCH="main"
 INSTALL_DIR="/opt/meow-meow-3000"
-WAF_BACKEND="http://127.0.0.1/dvwa"
+WAF_BACKEND="http://127.0.0.1:8080"
 WAF_MODE="IPS"
 WAF_LISTEN_HOST="0.0.0.0"
-WAF_LISTEN_PORT="8080"
+WAF_LISTEN_PORT="80"
 WAF_DASHBOARD_HOST="0.0.0.0"
 WAF_DASHBOARD_PORT="5001"
 
