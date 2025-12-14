@@ -58,4 +58,12 @@ def create_dashboard_app() -> Flask:
             data = data[-limit:]
         return jsonify({"items": data, "count": len(data)})
 
+    @app.post("/api/logs/clear")
+    def api_logs_clear():
+        path = settings.logs_file
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8"):
+            pass
+        return jsonify({"status": "ok"})
+
     return app

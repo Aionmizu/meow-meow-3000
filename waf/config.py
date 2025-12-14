@@ -13,7 +13,7 @@ _BASE_DIR = _PKG_DIR.parent  # project root when running from repo or install di
 @dataclass(frozen=True)
 class Settings:
     # Backend DVWA base URL (Kali's Apache)
-    backend_base_url: str = os.getenv("WAF_BACKEND", "http://127.0.0.1/dvwa")
+    backend_base_url: str = os.getenv("WAF_BACKEND", "http://127.0.0.1:8080")
 
     # Mode: IDS (log-only) or IPS (block when score > threshold)
     mode: str = os.getenv("WAF_MODE", "IPS").upper()  # "IDS" or "IPS"
@@ -24,7 +24,7 @@ class Settings:
 
     # Listen address/port for the proxy and dashboard
     host: str = os.getenv("WAF_LISTEN_HOST", "0.0.0.0")
-    port: int = int(os.getenv("WAF_LISTEN_PORT", "8080"))
+    port: int = int(os.getenv("WAF_LISTEN_PORT", "80"))
 
     dashboard_host: str = os.getenv("WAF_DASHBOARD_HOST", "0.0.0.0")
     dashboard_port: int = int(os.getenv("WAF_DASHBOARD_PORT", "5001"))
